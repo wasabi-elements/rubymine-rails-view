@@ -1,0 +1,96 @@
+<idea-plugin>
+    <id>io.susshi.railsview</id>
+    <name>Rails View</name>
+    <vendor email="info@susshi.io" url="https://susshi.io">Wasabi Elements GmbH</vendor>
+
+    <description><![CDATA[
+        <p>
+            Provides a <b>Rails View</b> like the one removed from RubyMine 2025.3 — and goes further.
+            A dedicated Rails View tab in the Project tool window replaces the raw
+            filesystem tree with a Rails-aware view of your project.
+        </p>
+
+        <h3>Sections</h3>
+        <p>
+            Models &middot; Controllers &middot; Views &middot; Helpers &middot; Mailers &middot;
+            Jobs &middot; Services &middot; Channels &middot; GraphQL &middot; Policies &middot;
+            Serializers &middot; Decorators &middot; Uploaders &middot; Assets &middot;
+            JavaScript &middot; Config &middot; Database &middot; Lib &middot; Spec / Test
+        </p>
+
+        <h3>Models</h3>
+        <ul>
+            <li>Files shown by Ruby class name (<b>User</b>, <b>OrderItem</b>, &hellip;)</li>
+            <li>Database columns from <code>db/schema.rb</code> listed directly under each model</li>
+            <li>Associations (<code>has_many</code>, <code>belongs_to</code>, &hellip;), scopes, and attribute macros</li>
+            <li><code>typed_store</code> blocks expanded to show each individual typed attribute</li>
+            <li>Methods grouped into <b>Class Methods</b>, <b>Instance Methods</b>, and <b>Private Methods</b></li>
+        </ul>
+
+        <h3>Controllers</h3>
+        <ul>
+            <li>Inline <b>Views &rsaquo; &hellip;</b> shortcut linking directly to the matching views directory</li>
+            <li>Matching helper file shown as an expandable child node</li>
+            <li>Partials collected under a <b>Partials</b> folder</li>
+            <li>Actions listed with their matching view files as children</li>
+        </ul>
+
+        <h3>Database</h3>
+        <ul>
+            <li>Migrations sorted newest-first</li>
+            <li>Filenames reformatted for readability: <code>2026-06-17-113427 CreateNats</code></li>
+        </ul>
+
+        <h3>Navigation</h3>
+        <ul>
+            <li>Auto-scroll from editor keeps the tree in sync as you move between files</li>
+            <li><b>Select in Rails View</b> action available in the editor context menu</li>
+        </ul>
+
+        <h3>Configurable</h3>
+        <p>Fine-tune the view under <b>Settings &rarr; Tools &rarr; Rails View</b>:</p>
+        <ul>
+            <li>Show or hide Spec / Test sections</li>
+            <li>Show or hide the Project Files node</li>
+            <li>Toggle the Views shortcut under each controller</li>
+            <li>Toggle method grouping (Class / Instance / Private)</li>
+            <li>Toggle model macro grouping (Schema / Associations / Scopes / Attributes)</li>
+        </ul>
+        <p>
+            Custom section order is supported via a <code>.railsview</code> file in the
+            project root — one section key per line.
+        </p>
+    ]]></description>
+
+    <idea-version since-build="261"/>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>org.jetbrains.plugins.ruby</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectViewPane
+            implementation="io.susshi.railsview.pane.RailsProjectViewPane"
+            order="after ProjectPane"/>
+
+        <applicationService
+            serviceImplementation="io.susshi.railsview.settings.RailsViewSettings"/>
+
+        <applicationConfigurable
+            parentId="tools"
+            instance="io.susshi.railsview.settings.RailsViewConfigurable"
+            id="io.susshi.railsview.settings"
+            displayName="Rails View"/>
+
+        <notificationGroup id="Rails View" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <action id="RailsView.SelectInRailsView"
+                class="io.susshi.railsview.actions.SelectInRailsViewAction"
+                text="Select in Rails View"
+                description="Locate the current file in the Rails View pane">
+            <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="RevealGroup"/>
+        </action>
+    </actions>
+</idea-plugin>

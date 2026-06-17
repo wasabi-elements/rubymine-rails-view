@@ -1,0 +1,16 @@
+.devcontainer/
+.gradle/
+build/
+.idea/
+*.iml
+out/
+gen/
+bin/
+chain.crt
+private.pem
+gradle/wrapper/gradle-wrapper.jar
+.intellijPlatform/
+.kotlin/
+.claude/
+CLAUDE.md
+Makefile

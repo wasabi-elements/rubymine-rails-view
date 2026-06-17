@@ -1,0 +1,29 @@
+# Rails View default section order
+# Edit this file to change the order for projects that don't have a .railsview file.
+# Projects can always override by placing a .railsview file in their root directory.
+#
+# Available keys:
+#   models, controllers, views, helpers, mailers, jobs, services, channels,
+#   uploaders, policies, serializers, decorators, concerns, graphql, assets,
+#   javascript, config, database, lib, spec, test
+controllers
+assets
+javascript
+models
+database
+mailers
+graphql
+helpers
+concerns
+views
+channels
+decorators
+jobs
+policies
+uploaders
+serializers
+services
+config
+lib
+spec
+test
