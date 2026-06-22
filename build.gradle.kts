@@ -4,10 +4,11 @@ plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "2.3.0"
     id("org.jetbrains.intellij.platform") version "2.16.0"
+    id("org.jetbrains.changelog") version "2.2.1"
 }
 
 group = "io.susshi"
-version = "1.0.0"
+version = "1.0.3"
 
 repositories {
     mavenCentral()
@@ -37,6 +38,9 @@ intellijPlatform {
         ideaVersion {
             sinceBuild = "261"
             untilBuild = provider { null }
+        }
+        changeNotes = provider {
+            changelog.renderItem(changelog.getLatest(), org.jetbrains.changelog.Changelog.OutputType.HTML)
         }
     }
     signing {

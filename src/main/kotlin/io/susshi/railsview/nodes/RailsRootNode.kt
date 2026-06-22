@@ -96,6 +96,7 @@ class RailsProjectNode(
         val children = mutableListOf<AbstractTreeNode<*>>()
         var ordinal = 0
         val claimedRootDirs = mutableSetOf("app")
+        val claimedAppDirs = mutableSetOf<String>()
 
         for (def in orderedSections(projectRoot)) {
             if ((def.kind == SectionKind.SPEC || def.kind == SectionKind.TEST) && !appSettings.showTests) continue
@@ -104,13 +105,14 @@ class RailsProjectNode(
             val dir = parent.findChild(def.dirName)?.takeIf { it.isDirectory } ?: continue
             val psiDir = psiManager.findDirectory(dir) ?: continue
             children.add(RailsSectionNode(project, psiDir, settings, def.label, def.kind, ordinal++))
-            if (!def.appLevel) claimedRootDirs.add(def.dirName)
+            if (def.appLevel) claimedAppDirs.add(def.dirName) else claimedRootDirs.add(def.dirName)
         }
 
         if (projectRoot != null) {
             val rootPsiDir = psiManager.findDirectory(projectRoot)
+            val appPsiDir = psiManager.findDirectory(appRoot)
             if (rootPsiDir != null && appSettings.showProjectFiles) {
-                children.add(RailsProjectFilesNode(project, rootPsiDir, settings, claimedRootDirs, ordinal))
+                children.add(RailsProjectFilesNode(project, rootPsiDir, settings, claimedRootDirs, ordinal, appPsiDir, claimedAppDirs))
             }
         }
 

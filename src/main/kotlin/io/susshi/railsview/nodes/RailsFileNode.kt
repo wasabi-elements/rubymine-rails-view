@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.SimpleTextAttributes
@@ -150,7 +151,11 @@ class RailsFileNode(
             toClassName(file)
         else
             file.name
-        data.addText(displayName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        val attrs = file.virtualFile?.let { vf ->
+            FileStatusManager.getInstance(myProject).getStatus(vf).color
+                ?.let { SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, it) }
+        } ?: SimpleTextAttributes.REGULAR_ATTRIBUTES
+        data.addText(displayName, attrs)
     }
 
     override fun canNavigate() = nav.canNavigate()

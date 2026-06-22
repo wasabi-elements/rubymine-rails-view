@@ -17,6 +17,7 @@ import icons.RailsViewIcons
 /**
  * Shows project-root files (Gemfile, Rakefile, …) plus any root directories
  * that are not already covered by a dedicated section node.
+ * Also shows any subdirectories of app/ that are not covered by a dedicated section.
  */
 class RailsProjectFilesNode(
     project: Project,
@@ -24,6 +25,8 @@ class RailsProjectFilesNode(
     settings: ViewSettings,
     private val claimedRootDirs: Set<String> = emptySet(),
     private val ordinal: Int = Int.MAX_VALUE,
+    private val appDir: PsiDirectory? = null,
+    private val claimedAppDirs: Set<String> = emptySet(),
 ) : ProjectViewNode<PsiDirectory>(project, projectRoot, settings) {
 
     // Must be a ProjectViewNode so the visitor descends into this node during autoscroll.
@@ -44,6 +47,16 @@ class RailsProjectFilesNode(
     override fun getChildren(): Collection<AbstractTreeNode<*>> {
         val psiManager = PsiManager.getInstance(myProject)
         val children = mutableListOf<AbstractTreeNode<*>>()
+
+        // Unclaimed subdirs of app/ shown as app/<name>
+        if (appDir != null) {
+            val hasUnclaimed = appDir.virtualFile.children.any {
+                it.isDirectory && it.name !in ALWAYS_HIDDEN && it.name !in claimedAppDirs
+            }
+            if (hasUnclaimed) {
+                children.add(AppRemainingNode(myProject, appDir, settings, claimedAppDirs))
+            }
+        }
 
         for (entry in projectRoot.virtualFile.children.sortedWith(compareBy({ !it.isDirectory }, { it.name }))) {
             if (entry.name in ALWAYS_HIDDEN) continue

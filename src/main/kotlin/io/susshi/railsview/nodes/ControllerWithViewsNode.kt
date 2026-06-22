@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -96,7 +97,7 @@ class ControllerWithViewsNode(
 
             // Build action nodes — each may carry matching view files
             val actionNodes = actionMethods.mapIndexed { idx, method ->
-                val matchingViews = allViewFiles.filter { it.nameWithoutExtension == method.name }
+                val matchingViews = allViewFiles.filter { it.name.substringBefore('.') == method.name }
                 claimedViewFiles.addAll(matchingViews)
                 RailsMethodNode(myProject, method, settings, matchingViews, sortIndex = idx)
             }
@@ -118,7 +119,7 @@ class ControllerWithViewsNode(
         } else {
             // Flat: every method with its matching views (current behaviour)
             for ((idx, method) in allMethods.withIndex()) {
-                val matchingViews = allViewFiles.filter { it.nameWithoutExtension == method.name }
+                val matchingViews = allViewFiles.filter { it.name.substringBefore('.') == method.name }
                 claimedViewFiles.addAll(matchingViews)
                 children.add(RailsMethodNode(myProject, method, settings, matchingViews, sortIndex = idx))
             }
@@ -143,7 +144,11 @@ class ControllerWithViewsNode(
         if (psiFile != null) {
             presentation.setIcon(psiFile.getIcon(0))
             val className = RailsFileNode.toClassName(psiFile)
-            presentation.addText(className, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            val attrs = value?.let { vf ->
+                FileStatusManager.getInstance(myProject).getStatus(vf).color
+                    ?.let { SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, it) }
+            } ?: SimpleTextAttributes.REGULAR_ATTRIBUTES
+            presentation.addText(className, attrs)
         } else {
             presentation.presentableText = value?.name ?: ""
         }
