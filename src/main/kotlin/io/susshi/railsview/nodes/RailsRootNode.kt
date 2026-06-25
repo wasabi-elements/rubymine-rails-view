@@ -4,6 +4,8 @@ import io.susshi.railsview.settings.RailsViewSettings
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ViewSettings
+import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode
+import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -75,7 +77,7 @@ class RailsRootNode(
 class RailsProjectNode(
     project: Project,
     viewSettings: ViewSettings,
-) : ProjectViewNode<Project>(project, project, viewSettings) {
+) : ProjectViewProjectNode(project, viewSettings) {
 
     // Same as RailsRootNode — must be a ProjectViewNode so the visitor descends into it.
     override fun contains(file: VirtualFile): Boolean = true
@@ -116,6 +118,7 @@ class RailsProjectNode(
             }
         }
 
+        children.add(ExternalLibrariesNode(project, settings))
         return children
     }
 
