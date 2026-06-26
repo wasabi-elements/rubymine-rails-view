@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-06-26
+
+### Added
+- **Routes section**: New dedicated section backed by `config/routes.rb`, slotted into the section order like any other section. Parses explicit verb routes (`get`, `post`, `patch`, `put`, `delete`, `head`) with both `to:` and `:to =>` syntax, `root`, `resources`/`resource` blocks (with `only:`, `except:`, `controller:` options), `namespace` blocks, `match` routes, and `concern` definitions with `concerns` usage.
+- **Nested Routes view**: Routes can be displayed as a nested path hierarchy (e.g. `api → v1 → config → controller`) instead of a flat controller list — on by default. Toggle with **Nest routes by path hierarchy** in Settings → Rails View.
+- **Show Routes section** toggle in Settings → Rails View.
+- **Section ordering UI**: The Settings panel now has a orderable list for all sections, with a **Reset to Defaults** button. The chosen order is persisted across IDE restarts and applies when no `.railsview` file is present.
+- **Concerns:** `include`, `extend`, and `prepend` calls are now shown as a grouped **Concerns** node under both model and controller nodes.
+- **Migration tooltip**: Hovering over a migration node in the Database section shows the full raw filename (the formatted display name truncates it).
+- **Schema caching**: `db/schema.rb` is now parsed once and cached by modification stamp — repeated tree expansions show schema columns immediately without re-reading the file.
+
+### Changed
+- `routes` added to the default section order (appears after controllers).
+
 ## [1.0.3] - 2026-06-22
 
 ### Added

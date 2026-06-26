@@ -12,15 +12,17 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.SimpleTextAttributes
 import icons.RailsViewIcons
 
-private data class SectionDef(
+internal data class SectionDef(
     val key: String,
     val dirName: String,
     val label: String,
     val kind: SectionKind,
     val appLevel: Boolean,
+    /** Non-null for file-backed sections; path is relative to the project root. */
+    val filePath: String? = null,
 )
 
-private val DEFAULT_SECTIONS = listOf(
+internal val DEFAULT_SECTIONS = listOf(
     SectionDef("models",      "models",      "Models",      SectionKind.MODELS,      true),
     SectionDef("controllers", "controllers", "Controllers", SectionKind.CONTROLLERS, true),
     SectionDef("views",       "views",       "Views",       SectionKind.VIEWS,       true),
@@ -33,16 +35,30 @@ private val DEFAULT_SECTIONS = listOf(
     SectionDef("policies",    "policies",    "Policies",    SectionKind.POLICIES,    true),
     SectionDef("serializers", "serializers", "Serializers", SectionKind.SERIALIZERS, true),
     SectionDef("decorators",  "decorators",  "Decorators",  SectionKind.DECORATORS,  true),
-    SectionDef("concerns",    "concerns",    "Concerns",    SectionKind.CONCERNS,    true),
     SectionDef("assets",      "assets",      "Assets",      SectionKind.ASSETS,      true),
     SectionDef("javascript",  "javascript",  "JavaScript",  SectionKind.JAVASCRIPT,  true),
     SectionDef("graphql",     "graphql",     "GraphQL",     SectionKind.GRAPHQL,     true),
+    SectionDef("routes",      "",            "Routes",      SectionKind.ROUTES,      false, "config/routes.rb"),
     SectionDef("config",      "config",      "Config",      SectionKind.CONFIG,      false),
     SectionDef("database",    "db",          "Database",    SectionKind.DATABASE,    false),
     SectionDef("lib",         "lib",         "Lib",         SectionKind.LIB,         false),
     SectionDef("spec",        "spec",        "Spec",        SectionKind.SPEC,        false),
     SectionDef("test",        "test",        "Test",        SectionKind.TEST,        false),
 )
+
+/** Reads `railsview-defaults.txt` from the plugin bundle; falls back to DEFAULT_SECTIONS order. */
+internal fun loadBundledSectionOrder(): List<String> {
+    val clazz = RailsRootNode::class.java
+    fun tryLoad(stream: java.io.InputStream?): List<String>? = try {
+        stream?.bufferedReader()?.readLines()
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() && !it.startsWith('#') }
+            ?.takeIf { it.isNotEmpty() }
+    } catch (_: Exception) { null }
+    return tryLoad(clazz.getResourceAsStream("/railsview-defaults.txt"))
+        ?: tryLoad(clazz.classLoader?.getResourceAsStream("railsview-defaults.txt"))
+        ?: DEFAULT_SECTIONS.map { it.key }
+}
 
 /** Invisible tree root — returns a single RailsProjectNode as its only child. */
 class RailsRootNode(
@@ -100,12 +116,22 @@ class RailsProjectNode(
 
         for (def in orderedSections(projectRoot)) {
             if ((def.kind == SectionKind.SPEC || def.kind == SectionKind.TEST) && !appSettings.showTests) continue
+            if (def.kind == SectionKind.ROUTES && !appSettings.showRoutes) continue
 
-            val parent = if (def.appLevel) appRoot else (projectRoot ?: continue)
-            val dir = parent.findChild(def.dirName)?.takeIf { it.isDirectory } ?: continue
-            val psiDir = psiManager.findDirectory(dir) ?: continue
-            children.add(RailsSectionNode(project, psiDir, settings, def.label, def.kind, ordinal++))
-            if (def.appLevel) claimedAppDirs.add(def.dirName) else claimedRootDirs.add(def.dirName)
+            if (def.filePath != null) {
+                // File-backed section (e.g. Routes → config/routes.rb)
+                val vf = projectRoot?.findFileByRelativePath(def.filePath)?.takeIf { !it.isDirectory } ?: continue
+                psiManager.findFile(vf)?.let { psiFile ->
+                    children.add(RoutesSectionNode(project, psiFile, settings, ordinal++))
+                }
+            } else {
+                // Directory-backed section
+                val parent = if (def.appLevel) appRoot else (projectRoot ?: continue)
+                val dir = parent.findChild(def.dirName)?.takeIf { it.isDirectory } ?: continue
+                val psiDir = psiManager.findDirectory(dir) ?: continue
+                children.add(RailsSectionNode(project, psiDir, settings, def.label, def.kind, ordinal++))
+                if (def.appLevel) claimedAppDirs.add(def.dirName) else claimedRootDirs.add(def.dirName)
+            }
         }
 
         if (projectRoot != null) {
@@ -120,22 +146,28 @@ class RailsProjectNode(
     }
 
     private fun orderedSections(projectRoot: VirtualFile?): List<SectionDef> {
+        // Priority 1: .railsview file in the project root
         val projectKeys = projectRoot?.findChild(".railsview")?.let { parseKeyFile { it.inputStream } }
-        val providerKeys = if (projectKeys == null) loadProviderDefaults() else null
+        if (projectKeys != null) {
+            if (projectKeys.isEmpty()) return DEFAULT_SECTIONS
+            return resolveKeys(projectKeys)
+        }
 
-        val keys = projectKeys ?: providerKeys ?: return DEFAULT_SECTIONS
-        if (keys.isEmpty()) return DEFAULT_SECTIONS
+        // Priority 2: user-configured order from Tools → Rails View settings
+        val settingsOrder = RailsViewSettings.getInstance().sectionOrder
+        if (settingsOrder.isNotEmpty()) return resolveKeys(settingsOrder)
 
+        // Priority 3: bundled railsview-defaults.txt
+        return resolveKeys(loadBundledSectionOrder())
+    }
+
+    private fun resolveKeys(keys: List<String>): List<SectionDef> {
         val byKey = DEFAULT_SECTIONS.associateBy { it.key }
         val seen = mutableSetOf<String>()
         val ordered = keys.mapNotNull { byKey[it]?.also { d -> seen.add(d.key) } }.toMutableList()
         DEFAULT_SECTIONS.filterTo(ordered) { it.key !in seen }
         return ordered
     }
-
-    private fun loadProviderDefaults(): List<String>? =
-        parseKeyFile { javaClass.getResourceAsStream("/railsview-defaults.txt") }
-            ?: parseKeyFile { javaClass.classLoader?.getResourceAsStream("railsview-defaults.txt") }
 
     private fun parseKeyFile(streamProvider: () -> java.io.InputStream?): List<String>? = try {
         streamProvider()?.bufferedReader()?.readLines()

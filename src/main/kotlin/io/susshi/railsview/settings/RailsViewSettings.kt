@@ -19,8 +19,17 @@ class RailsViewSettings : PersistentStateComponent<RailsViewSettings> {
     /** Whether spec/ and test/ sections are shown in the tree */
     var showTests: Boolean = true
 
+    /** Whether the Routes section (config/routes.rb) is shown */
+    var showRoutes: Boolean = true
+
     /** Whether the top-level "Project Files" node is shown */
     var showProjectFiles: Boolean = true
+
+    /**
+     * User-configured section order, applied when no .railsview file exists.
+     * Empty list means "use railsview-defaults.txt".
+     */
+    var sectionOrder: MutableList<String> = ArrayList()
 
     /** Whether to show the "Views › …" shortcut under each controller node */
     var groupViewsUnderControllers: Boolean = true
@@ -30,6 +39,9 @@ class RailsViewSettings : PersistentStateComponent<RailsViewSettings> {
 
     /** Whether to group model macros (schema, associations, scopes, attributes) into folder nodes */
     var groupModelMacros: Boolean = true
+
+    /** Whether to display the Routes section as a nested path hierarchy (api → v1 → …) instead of a flat controller list */
+    var routesNestedPaths: Boolean = true
 
     override fun getState(): RailsViewSettings = this
 

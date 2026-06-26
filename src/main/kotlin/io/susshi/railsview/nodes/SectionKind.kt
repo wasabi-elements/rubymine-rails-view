@@ -26,6 +26,7 @@ enum class SectionKind {
     SPEC,
     TEST,
     GRAPHQL,
+    ROUTES,
     PROJECT_FILES,
     ;
 

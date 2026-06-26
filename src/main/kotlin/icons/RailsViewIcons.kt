@@ -28,6 +28,7 @@ object RailsViewIcons {
     val SPEC_ICON: Icon           = AllIcons.Nodes.JunitTestMark
     val TEST_ICON: Icon           = AllIcons.Nodes.JunitTestMark
     val GRAPHQL_ICON: Icon         = AllIcons.FileTypes.JsonSchema
+    val ROUTES_ICON: Icon          = AllIcons.Nodes.PpWeb
     val PROJECT_FILES_ICON: Icon  = AllIcons.General.ProjectTab
 
     fun forSection(kind: SectionKind): Icon = when (kind) {
@@ -52,6 +53,7 @@ object RailsViewIcons {
         SectionKind.SPEC          -> SPEC_ICON
         SectionKind.TEST          -> TEST_ICON
         SectionKind.GRAPHQL       -> GRAPHQL_ICON
+        SectionKind.ROUTES        -> ROUTES_ICON
         SectionKind.PROJECT_FILES -> PROJECT_FILES_ICON
     }
 }

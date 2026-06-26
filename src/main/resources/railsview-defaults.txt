@@ -4,9 +4,10 @@
 #
 # Available keys:
 #   models, controllers, views, helpers, mailers, jobs, services, channels,
-#   uploaders, policies, serializers, decorators, concerns, graphql, assets,
+#   uploaders, policies, serializers, decorators, graphql, routes, assets,
 #   javascript, config, database, lib, spec, test
 controllers
+routes
 assets
 javascript
 models
@@ -14,7 +15,6 @@ database
 mailers
 graphql
 helpers
-concerns
 views
 channels
 decorators

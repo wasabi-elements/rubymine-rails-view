@@ -61,22 +61,32 @@ class ControllerWithViewsNode(
             children.add(RailsFileNode(myProject, psiFile, settings, showClassName = true, sortWeight = 0))
         }
 
+        // 2. Concerns (include / extend / prepend) under the controller class
+        val controllerRFile = controllerVf?.let { psiManager.findFile(it) } as? RFile
+        val controllerRClass = controllerRFile?.let {
+            PsiTreeUtil.findChildOfType(it, RClass::class.java)
+        }
+        controllerRClass?.let { rc ->
+            val concernNodes = RailsConcernNode.extractConcerns(rc, myProject, settings)
+            if (concernNodes.isNotEmpty()) {
+                children.add(MethodGroupNode(myProject, "Concerns", AllIcons.Nodes.AbstractMethod,
+                    concernNodes, settings, groupWeight = 3, containingFile = controllerVf))
+            }
+        }
+
         val viewsDir = findMatchingViewsDir()
         val allViewFiles = viewsDir?.children?.filter { !it.isDirectory } ?: emptyList()
         val claimedViewFiles = mutableSetOf<VirtualFile>()
 
-        // 2. Partials group (before methods, after helper)
+        // 4. Partials group (before methods, after helper)
         val partials = allViewFiles.filter { it.name.startsWith("_") }
         claimedViewFiles.addAll(partials)
         if (partials.isNotEmpty()) {
             children.add(PartialsGroupNode(myProject, partials, settings))
         }
 
-        // 3. Method nodes
-        val controllerPsi = controllerVf?.let { psiManager.findFile(it) }
-        val rClass = controllerPsi
-            ?.let { it as? RFile }
-            ?.let { PsiTreeUtil.findChildOfType(it, RClass::class.java) }
+        // 5. Method nodes
+        val rClass = controllerRClass
         val allMethods = rClass?.getMethods() ?: emptyList()
 
         if (appSettings.groupMethods) {

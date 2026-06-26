@@ -50,6 +50,17 @@ class RailsFileNode(
         val fileVf = file.virtualFile
 
         if (vPath.contains("/app/models/")) {
+            // ── Concerns (include / extend / prepend) ──
+            val concernNodes = RailsConcernNode.extractConcerns(rClass, myProject, viewSettings)
+            if (concernNodes.isNotEmpty()) {
+                if (appSettings.groupModelMacros) {
+                    result.add(MethodGroupNode(myProject, "Concerns", AllIcons.Nodes.AbstractMethod,
+                        concernNodes, viewSettings, groupWeight = 5, containingFile = fileVf))
+                } else {
+                    result.addAll(concernNodes)
+                }
+            }
+
             // ── Schema columns ──
             val columnNodes = mutableListOf<SchemaColumnNode>()
             SchemaColumnNode.columnsForModel(myProject, file.name)?.let { (schemaFile, cols) ->

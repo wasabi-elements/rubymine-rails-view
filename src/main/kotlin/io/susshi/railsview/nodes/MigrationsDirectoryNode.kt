@@ -46,6 +46,7 @@ class MigrationFileNode(
         val file = value ?: return
         data.setIcon(file.getIcon(0))
         data.addText(formatMigrationName(file.name), SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        data.tooltip = file.name
     }
 
     override fun canNavigate() = nav.canNavigate()

@@ -59,6 +59,9 @@ class SchemaColumnNode(
 
         data class ColumnInfo(val name: String, val type: String, val charOffset: Int)
 
+        private data class CachedSchema(val stamp: Long, val tables: Map<String, List<ColumnInfo>>)
+        private val schemaCache = java.util.concurrent.ConcurrentHashMap<String, CachedSchema>()
+
         /**
          * Returns (schemaFile, columns) for the model with the given filename, or null if
          * db/schema.rb doesn't exist or the table can't be found.
@@ -69,49 +72,56 @@ class SchemaColumnNode(
         ): Pair<VirtualFile, List<ColumnInfo>>? {
             val tableName = tableNameFor(modelFileName) ?: return null
             val schemaFile = findSchemaFile(project) ?: return null
-            val text = try {
-                VfsUtilCore.loadText(schemaFile)
-            } catch (_: Exception) {
-                return null
-            }
-            val columns = parseColumns(text, tableName)
+            val columns = loadCachedSchema(schemaFile)[tableName] ?: return null
             return if (columns.isEmpty()) null else Pair(schemaFile, columns)
         }
 
-        private fun parseColumns(text: String, tableName: String): List<ColumnInfo> {
+        private fun loadCachedSchema(schemaFile: VirtualFile): Map<String, List<ColumnInfo>> {
+            val stamp = schemaFile.modificationStamp
+            schemaCache[schemaFile.path]?.let { if (it.stamp == stamp) return it.tables }
+            return try {
+                val tables = parseAllTables(VfsUtilCore.loadText(schemaFile))
+                schemaCache[schemaFile.path] = CachedSchema(stamp, tables)
+                tables
+            } catch (_: Exception) {
+                emptyMap()
+            }
+        }
+
+        private fun parseAllTables(text: String): Map<String, List<ColumnInfo>> {
             val colTypes = COLUMN_TYPES.joinToString("|") { Regex.escape(it) }
             val colPattern = Regex("""^\s+t\.($colTypes)\s+"(\w+)"""")
-            val result = mutableListOf<ColumnInfo>()
+            val tablePattern = Regex("""create_table\s+"(\w+)"""")
+            val result = mutableMapOf<String, MutableList<ColumnInfo>>()
 
             val lines = text.lines()
-            var inTable = false
+            var currentTable: String? = null
             var tableIndent = 0
             var charOffset = 0
 
             for (line in lines) {
-                val lineLen = line.length + 1  // +1 for newline
+                val lineLen = line.length + 1
                 val trimmed = line.trimStart()
 
-                if (!inTable) {
-                    if (trimmed.startsWith("create_table") && line.contains(""""$tableName"""")) {
-                        inTable = true
+                if (currentTable == null) {
+                    tablePattern.find(line)?.let { m ->
+                        currentTable = m.groupValues[1]
                         tableIndent = line.length - trimmed.length
+                        result[currentTable] = mutableListOf()
                     }
                 } else {
-                    // A non-blank line at same or lesser indentation signals end of block
                     if (trimmed.isNotEmpty()) {
                         val lineIndent = line.length - trimmed.length
                         if (lineIndent <= tableIndent && trimmed.startsWith("end")) {
-                            break
-                        }
-                        // Column definition: t.<type> "<name>"
-                        val m = colPattern.find(line)
-                        if (m != null) {
-                            result.add(ColumnInfo(
-                                name = m.groupValues[2],
-                                type = m.groupValues[1],
-                                charOffset = charOffset + m.range.first,
-                            ))
+                            currentTable = null
+                        } else {
+                            colPattern.find(line)?.let { m ->
+                                result[currentTable]?.add(ColumnInfo(
+                                    name = m.groupValues[2],
+                                    type = m.groupValues[1],
+                                    charOffset = charOffset + m.range.first,
+                                ))
+                            }
                         }
                     }
                 }
