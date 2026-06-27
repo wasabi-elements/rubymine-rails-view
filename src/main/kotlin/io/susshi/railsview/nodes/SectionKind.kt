@@ -28,6 +28,8 @@ enum class SectionKind {
     GRAPHQL,
     ROUTES,
     PROJECT_FILES,
+    EXTERNAL_FILES,
+    SCRATCHES,
     ;
 
     val icon get() = icons.RailsViewIcons.forSection(this)

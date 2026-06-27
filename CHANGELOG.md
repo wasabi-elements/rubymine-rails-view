@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-06-27
+
+### Added
+- **External Libraries node**: Shows all installed gems and the Ruby SDK — identical to the node in RubyMine's built-in Project view. Opt-in via **Show External Libraries node** in Settings → Tools → Rails View.
+- **Scratches and Consoles node**: Shows the IDE's scratch files and console history, mirroring the standard Project view node. Opt-in via **Show Scratches and Consoles node** in Settings → Tools → Rails View.
+- **Project Files, External Libraries, and Scratches in section order**: All three nodes now participate in the section ordering list in Settings and in `.railsview` files (`project_files`, `external_files`, `scratches` keys).
+- **Team-wide section hiding via `.railsview`**: Prefix any key with `!` (e.g. `!spec`, `!scratches`) to hide that section for the whole team, overriding each developer's personal Settings.
+
+### Changed
+- Settings panel reorganised into **Display Section Options** (show/hide toggles per section) and **Section Behaviour Options** (grouping and nesting toggles) for clarity.
+
 ## [1.0.4] - 2026-06-26
 
 ### Added

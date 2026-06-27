@@ -6,7 +6,7 @@ The plugin adds a dedicated **Rails View** tab to the Project tool window that o
 your files the way Rails developers think — by function, not by raw directory structure.
 Ruby files are shown with their **class names** instead of raw filenames wherever possible.
 
-![rails-view-tree](media/rails-view-tree.png)
+![rails-view-tree](media/rails-view-tree-open.png)
 
 ---
 
@@ -79,10 +79,19 @@ Ruby files are shown with their **class names** instead of raw filenames whereve
   │   Jobs, Policies, Uploaders, Serializers, Services,
   │   Config, Lib, Spec, Test …
   │
-  └── Project Files
-      ├── bin/                               ← unclaimed root directories
-      ├── Gemfile
-      └── …
+  ├── Project Files
+  │   ├── bin/                               ← unclaimed root directories
+  │   ├── Gemfile
+  │   └── …
+  │
+  ├── External Libraries                     ← installed gems + Ruby SDK
+  │   ├── bundler 2.5.9
+  │   ├── rails 7.2.1
+  │   └── …
+  │
+  └── Scratches and Consoles                 ← IDE scratch files
+      ├── Scratches/
+      └── Consoles/
 ```
 
 Sections only appear when the corresponding directory (or file) exists in the project.
@@ -100,8 +109,11 @@ group can be toggled off in **Settings → Tools → Rails View**.
 - **Controller → Views link** — each controller node expands to show its matching `app/views/<name>/` directory, including namespaced controllers (`Admin::UsersController` → `app/views/admin/users/`).
 - **VCS status colours** — modified files appear in orange, unversioned files in red, matching IntelliJ's own file status colours.
 - **Migration formatting** — `20260317113427_create_posts.rb` is displayed as `2026-03-17-113427 CreatePosts`, sorted newest-first. Hover to see the full raw filename.
+- **External Libraries node** — shows all installed gems and the Ruby SDK, identical to the node in RubyMine's built-in Project view. Position it anywhere in the section order.
+- **Scratches and Consoles node** — shows the IDE's scratch files and console history, identical to the standard Project view node.
 - **Project Files catch-all** — shows curated root files (Gemfile, Rakefile, .env, Dockerfile …) plus any root-level directories not already covered by a dedicated section.
-- **Configurable section order** — drag to reorder sections in Settings → Rails View, or commit a `.railsview` file so the whole team shares the same layout.
+- **Configurable section order** — use the up/down arrows in **Settings → Rails View** to reorder sections, or commit a `.railsview` file so the whole team shares the same layout. Every node — including Project Files, External Libraries, and Scratches — participates in the order.
+- **Team-wide hide via `.railsview`** — prefix any key with `!` to hide that section for everyone who has the file: `!spec` hides the Spec section even if it's enabled in personal Settings.
 
 ---
 
@@ -109,13 +121,14 @@ group can be toggled off in **Settings → Tools → Rails View**.
 
 ### Via Settings
 
-Open **Settings → Tools → Rails View** and drag sections in the **Section Order** list to your preferred position. Changes are saved immediately and apply when no `.railsview` file is present in the project.
+Open **Settings → Tools → Rails View** and use the up/down arrows in the **Section Order** list to reorder sections. Changes are saved immediately and apply when no `.railsview` file is present in the project.
 
 ### Per-project: `.railsview`
 
 Create a `.railsview` file in your project root (next to `Gemfile`) to pin the order for everyone on the team. When the file is present it takes full precedence — the GUI order is ignored entirely.
 
-One key per line; `#` starts a comment.
+One key per line; `#` starts a comment. Prefix a key with `!` to **hide** that section
+for the whole team (overrides each developer's personal Settings):
 
 ```
 # .railsview — Rails View section order for this project
@@ -129,15 +142,19 @@ database
 jobs
 mailers
 helpers
+!spec
+!scratches
 ```
 
 Sections listed in the file appear first in that order. Sections you omit are appended
 after in the default order. Sections whose directory (or file) doesn't exist are silently skipped.
+`!key` lines hide a section entirely, regardless of personal Settings.
 
 **Available keys:**
 `models` · `controllers` · `views` · `helpers` · `mailers` · `jobs` · `services` ·
 `channels` · `uploaders` · `policies` · `serializers` · `decorators` · `assets` ·
-`javascript` · `graphql` · `routes` · `config` · `database` · `lib` · `spec` · `test`
+`javascript` · `graphql` · `routes` · `config` · `database` · `lib` · `spec` · `test` ·
+`project_files` · `external_files` · `scratches`
 
 ---
 
@@ -145,12 +162,21 @@ after in the default order. Sections whose directory (or file) doesn't exist are
 
 **Settings → Tools → Rails View**
 
+**Display Section Options**
+
 | Option | Default | Description |
 |---|---|---|
 | Show Routes section | ✓ | Show the Routes section backed by `config/routes.rb` |
-| Nest routes by path hierarchy | ✓ | Display routes as a folder tree (`api → v1 → …`) instead of a flat controller list |
-| Show Test sections | ✓ | Show `spec/` and `test/` in the tree |
+| Show Test sections (spec/, test/) | ✓ | Show `spec/` and `test/` in the tree |
 | Show Project Files node | ✓ | Show Gemfile, Rakefile, unclaimed directories, etc. |
-| Group views under each controller | ✓ | Adds a `Views › posts` shortcut under each controller |
-| Group methods by scope | ✓ | Organises methods into Class Methods / Instance Methods / Private Methods |
-| Group model declarations by type | ✓ | Organises model children into Schema / Associations / Scopes / Attributes |
+| Show External Libraries node | — | Show installed gems and the Ruby SDK |
+| Show Scratches and Consoles node | — | Show IDE scratch files and console history |
+
+**Section Behaviour Options**
+
+| Option | Default | Description |
+|---|---|---|
+| Group Views under each controller | ✓ | Adds a `Views › posts` shortcut under each controller |
+| Group Methods by scope | ✓ | Organises methods into Class Methods / Instance Methods / Private Methods |
+| Group Model Declarations by type | ✓ | Organises model children into Schema / Associations / Scopes / Attributes |
+| Nest Routes by path hierarchy | ✓ | Display routes as a folder tree (`api → v1 → …`) instead of a flat controller list |

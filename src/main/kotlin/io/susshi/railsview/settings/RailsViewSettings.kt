@@ -22,9 +22,6 @@ class RailsViewSettings : PersistentStateComponent<RailsViewSettings> {
     /** Whether the Routes section (config/routes.rb) is shown */
     var showRoutes: Boolean = true
 
-    /** Whether the top-level "Project Files" node is shown */
-    var showProjectFiles: Boolean = true
-
     /**
      * User-configured section order, applied when no .railsview file exists.
      * Empty list means "use railsview-defaults.txt".
@@ -42,6 +39,15 @@ class RailsViewSettings : PersistentStateComponent<RailsViewSettings> {
 
     /** Whether to display the Routes section as a nested path hierarchy (api → v1 → …) instead of a flat controller list */
     var routesNestedPaths: Boolean = true
+
+    /** Whether the top-level "Project Files" node is shown */
+    var showProjectFiles: Boolean = true
+    
+    /** Whether the "External Libraries" node (gems, SDK) is shown at the bottom of the tree */
+    var showExternalFiles: Boolean = false
+
+    /** Whether the "Scratches and Consoles" node is shown */
+    var showScratches: Boolean = false
 
     override fun getState(): RailsViewSettings = this
 

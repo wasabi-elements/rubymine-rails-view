@@ -15,7 +15,8 @@
             Models &middot; Controllers &middot; Views &middot; Helpers &middot; Mailers &middot;
             Jobs &middot; Services &middot; Channels &middot; GraphQL &middot; Policies &middot;
             Serializers &middot; Decorators &middot; Uploaders &middot; Assets &middot;
-            JavaScript &middot; Config &middot; Database &middot; Lib &middot; Spec / Test
+            JavaScript &middot; Config &middot; Database &middot; Lib &middot; Spec / Test &middot;
+            Project Files &middot; External Libraries &middot; Scratches and Consoles
         </p>
 
         <h3>Models</h3>
@@ -41,6 +42,20 @@
             <li>Filenames reformatted for readability: <code>2026-06-17-113427 CreateNats</code></li>
         </ul>
 
+        <h3>Routes</h3>
+        <ul>
+            <li>Parses <code>config/routes.rb</code> and displays all routes with HTTP verb and path</li>
+            <li>Nested path view: <code>api &rsaquo; v1 &rsaquo; users</code> folder hierarchy (or switch to a flat controller list)</li>
+            <li>Supports <code>resources</code> / <code>resource</code>, <code>namespace</code>, <code>concern</code>, <code>match</code>, and all HTTP verb helpers</li>
+        </ul>
+
+        <h3>External Libraries &amp; Scratches</h3>
+        <ul>
+            <li>External Libraries: shows installed gems and the Ruby SDK — identical to RubyMine&rsquo;s built-in node</li>
+            <li>Scratches and Consoles: shows IDE scratch files and console history — identical to RubyMine&rsquo;s built-in node</li>
+            <li>Both are opt-in via <b>Settings &rarr; Tools &rarr; Rails View</b> and fully positionable in the section order</li>
+        </ul>
+
         <h3>Navigation</h3>
         <ul>
             <li>Auto-scroll from editor keeps the tree in sync as you move between files</li>
@@ -49,16 +64,26 @@
 
         <h3>Configurable</h3>
         <p>Fine-tune the view under <b>Settings &rarr; Tools &rarr; Rails View</b>:</p>
+        <p><i>Display Section Options</i></p>
         <ul>
+            <li>Show or hide the Routes section</li>
             <li>Show or hide Spec / Test sections</li>
             <li>Show or hide the Project Files node</li>
+            <li>Show or hide the External Libraries node (gems + SDK)</li>
+            <li>Show or hide the Scratches and Consoles node</li>
+        </ul>
+        <p><i>Section Behaviour Options</i></p>
+        <ul>
             <li>Toggle the Views shortcut under each controller</li>
             <li>Toggle method grouping (Class / Instance / Private)</li>
             <li>Toggle model macro grouping (Schema / Associations / Scopes / Attributes)</li>
+            <li>Toggle nested vs. flat route display</li>
         </ul>
         <p>
-            Custom section order is supported via a <code>.railsview</code> file in the
-            project root — one section key per line.
+            Use the up/down arrows in Settings to reorder sections, or commit a <code>.railsview</code>
+            file to the project root to share the layout with your team. Every node participates
+            in the order. Prefix a key with <code>!</code> (e.g. <code>!spec</code>) to hide that
+            section for everyone, overriding individual Settings.
         </p>
     ]]></description>
 

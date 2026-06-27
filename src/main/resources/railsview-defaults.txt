@@ -5,7 +5,11 @@
 # Available keys:
 #   models, controllers, views, helpers, mailers, jobs, services, channels,
 #   uploaders, policies, serializers, decorators, graphql, routes, assets,
-#   javascript, config, database, lib, spec, test
+#   javascript, config, database, lib, spec, test,
+#   project_files, external_files, scratches
+#
+# Prefix a key with ! to hide that section regardless of Settings:
+#   !routes   → hides the Routes section for the whole team
 controllers
 routes
 assets
@@ -27,3 +31,6 @@ config
 lib
 spec
 test
+project_files
+external_files
+scratches
