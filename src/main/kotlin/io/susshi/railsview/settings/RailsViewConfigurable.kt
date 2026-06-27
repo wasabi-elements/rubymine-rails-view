@@ -69,14 +69,10 @@ class RailsViewConfigurable : BoundConfigurable("Rails View") {
             .createPanel()
 
         return panel {
-            group("Display Options") {
+            group("Display Section Options") {
                 row {
                     checkBox("Show Routes section")
                         .bindSelected(settings::showRoutes)
-                }
-                row {
-                    checkBox("Nest routes by path hierarchy (api / v1 / … each become a folder)")
-                        .bindSelected(settings::routesNestedPaths)
                 }
                 row {
                     checkBox("Show Test sections (spec/, test/)")
@@ -87,16 +83,30 @@ class RailsViewConfigurable : BoundConfigurable("Rails View") {
                         .bindSelected(settings::showProjectFiles)
                 }
                 row {
-                    checkBox("Group views under each controller")
+                    checkBox("Show External Libraries node (gems, SDK)")
+                        .bindSelected(settings::showExternalFiles)
+                }
+                row {
+                    checkBox("Show Scratches and Consoles node")
+                        .bindSelected(settings::showScratches)
+                }
+            }
+            group("Section Behaviour Options") {
+                row {
+                    checkBox("Group Views under each controller")
                         .bindSelected(settings::groupViewsUnderControllers)
                 }
                 row {
-                    checkBox("Group methods by scope")
+                    checkBox("Group Methods by scope")
                         .bindSelected(settings::groupMethods)
                 }
                 row {
-                    checkBox("Group model declarations by type")
+                    checkBox("Group Model Declarations by type")
                         .bindSelected(settings::groupModelMacros)
+                }
+                row {
+                    checkBox("Nest Routes by path hierarchy (api / v1 / … each become a folder)")
+                        .bindSelected(settings::routesNestedPaths)
                 }
             }
             group("Section Order") {
@@ -121,7 +131,10 @@ class RailsViewConfigurable : BoundConfigurable("Rails View") {
                         "<b>Available keys:</b><br>" +
                         "models, controllers, views, helpers, mailers, jobs, services, channels,<br>" +
                         "uploaders, policies, serializers, decorators, assets, javascript, graphql,<br>" +
-                        "routes, config, database, lib, spec, test<br><br>" +
+                        "routes, config, database, lib, spec, test,<br>" +
+                        "project_files, external_files, scratches<br><br>" +
+                        "Prefix a key with <b>!</b> to hide that section for the whole team:<br>" +
+                        "<code>!routes</code> — hides Routes even if enabled in personal Settings.<br><br>" +
                         "<b>Example .railsview:</b><br>" +
                         "<pre>" +
                         "# My preferred order\n" +
@@ -130,6 +143,8 @@ class RailsViewConfigurable : BoundConfigurable("Rails View") {
                         "services\n" +
                         "views\n" +
                         "database\n" +
+                        "!spec\n" +
+                        "!scratches\n" +
                         "</pre>" +
                         "Sections listed in the file appear first in that order. Any sections not listed " +
                         "are appended after in the default order. Sections whose directory does not exist " +

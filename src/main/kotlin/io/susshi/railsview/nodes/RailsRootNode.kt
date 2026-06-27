@@ -23,27 +23,30 @@ internal data class SectionDef(
 )
 
 internal val DEFAULT_SECTIONS = listOf(
-    SectionDef("models",      "models",      "Models",      SectionKind.MODELS,      true),
-    SectionDef("controllers", "controllers", "Controllers", SectionKind.CONTROLLERS, true),
-    SectionDef("views",       "views",       "Views",       SectionKind.VIEWS,       true),
-    SectionDef("helpers",     "helpers",     "Helpers",     SectionKind.HELPERS,     true),
-    SectionDef("mailers",     "mailers",     "Mailers",     SectionKind.MAILERS,     true),
-    SectionDef("jobs",        "jobs",        "Jobs",        SectionKind.JOBS,        true),
-    SectionDef("services",    "services",    "Services",    SectionKind.SERVICES,    true),
-    SectionDef("channels",    "channels",    "Channels",    SectionKind.CHANNELS,    true),
-    SectionDef("uploaders",   "uploaders",   "Uploaders",   SectionKind.UPLOADERS,   true),
-    SectionDef("policies",    "policies",    "Policies",    SectionKind.POLICIES,    true),
-    SectionDef("serializers", "serializers", "Serializers", SectionKind.SERIALIZERS, true),
-    SectionDef("decorators",  "decorators",  "Decorators",  SectionKind.DECORATORS,  true),
-    SectionDef("assets",      "assets",      "Assets",      SectionKind.ASSETS,      true),
-    SectionDef("javascript",  "javascript",  "JavaScript",  SectionKind.JAVASCRIPT,  true),
-    SectionDef("graphql",     "graphql",     "GraphQL",     SectionKind.GRAPHQL,     true),
-    SectionDef("routes",      "",            "Routes",      SectionKind.ROUTES,      false, "config/routes.rb"),
-    SectionDef("config",      "config",      "Config",      SectionKind.CONFIG,      false),
-    SectionDef("database",    "db",          "Database",    SectionKind.DATABASE,    false),
-    SectionDef("lib",         "lib",         "Lib",         SectionKind.LIB,         false),
-    SectionDef("spec",        "spec",        "Spec",        SectionKind.SPEC,        false),
-    SectionDef("test",        "test",        "Test",        SectionKind.TEST,        false),
+    SectionDef("models",         "models",      "Models",             SectionKind.MODELS,         true),
+    SectionDef("controllers",    "controllers", "Controllers",        SectionKind.CONTROLLERS,    true),
+    SectionDef("views",          "views",       "Views",              SectionKind.VIEWS,          true),
+    SectionDef("helpers",        "helpers",     "Helpers",            SectionKind.HELPERS,        true),
+    SectionDef("mailers",        "mailers",     "Mailers",            SectionKind.MAILERS,        true),
+    SectionDef("jobs",           "jobs",        "Jobs",               SectionKind.JOBS,           true),
+    SectionDef("services",       "services",    "Services",           SectionKind.SERVICES,       true),
+    SectionDef("channels",       "channels",    "Channels",           SectionKind.CHANNELS,       true),
+    SectionDef("uploaders",      "uploaders",   "Uploaders",          SectionKind.UPLOADERS,      true),
+    SectionDef("policies",       "policies",    "Policies",           SectionKind.POLICIES,       true),
+    SectionDef("serializers",    "serializers", "Serializers",        SectionKind.SERIALIZERS,    true),
+    SectionDef("decorators",     "decorators",  "Decorators",         SectionKind.DECORATORS,     true),
+    SectionDef("assets",         "assets",      "Assets",             SectionKind.ASSETS,         true),
+    SectionDef("javascript",     "javascript",  "JavaScript",         SectionKind.JAVASCRIPT,     true),
+    SectionDef("graphql",        "graphql",     "GraphQL",            SectionKind.GRAPHQL,        true),
+    SectionDef("routes",         "",            "Routes",             SectionKind.ROUTES,         false, "config/routes.rb"),
+    SectionDef("config",         "config",      "Config",             SectionKind.CONFIG,         false),
+    SectionDef("database",       "db",          "Database",           SectionKind.DATABASE,       false),
+    SectionDef("lib",            "lib",         "Lib",                SectionKind.LIB,            false),
+    SectionDef("spec",           "spec",        "Spec",               SectionKind.SPEC,           false),
+    SectionDef("test",           "test",        "Test",               SectionKind.TEST,           false),
+    SectionDef("project_files",  "",            "Project Files",        SectionKind.PROJECT_FILES,  false),
+    SectionDef("external_files", "",            "External Libraries",   SectionKind.EXTERNAL_FILES, false),
+    SectionDef("scratches",      "",            "Scratches and Consoles", SectionKind.SCRATCHES,    false),
 )
 
 /** Reads `railsview-defaults.txt` from the plugin bundle; falls back to DEFAULT_SECTIONS order. */
@@ -114,51 +117,73 @@ class RailsProjectNode(
         val claimedRootDirs = mutableSetOf("app")
         val claimedAppDirs = mutableSetOf<String>()
 
-        for (def in orderedSections(projectRoot)) {
+        val (sections, projectHidden) = orderedSections(projectRoot)
+        for (def in sections) {
+            // .railsview !key lines override everything else
+            if (def.key in projectHidden) continue
+
             if ((def.kind == SectionKind.SPEC || def.kind == SectionKind.TEST) && !appSettings.showTests) continue
             if (def.kind == SectionKind.ROUTES && !appSettings.showRoutes) continue
+            if (def.kind == SectionKind.PROJECT_FILES && !appSettings.showProjectFiles) continue
+            if (def.kind == SectionKind.EXTERNAL_FILES && !appSettings.showExternalFiles) continue
+            if (def.kind == SectionKind.SCRATCHES && !appSettings.showScratches) continue
 
-            if (def.filePath != null) {
-                // File-backed section (e.g. Routes → config/routes.rb)
-                val vf = projectRoot?.findFileByRelativePath(def.filePath)?.takeIf { !it.isDirectory } ?: continue
-                psiManager.findFile(vf)?.let { psiFile ->
-                    children.add(RoutesSectionNode(project, psiFile, settings, ordinal++))
+            when {
+                def.kind == SectionKind.PROJECT_FILES -> {
+                    if (projectRoot != null) {
+                        val rootPsiDir = psiManager.findDirectory(projectRoot)
+                        val appPsiDir = psiManager.findDirectory(appRoot)
+                        if (rootPsiDir != null) {
+                            children.add(RailsProjectFilesNode(project, rootPsiDir, settings, claimedRootDirs, ordinal++, appPsiDir, claimedAppDirs))
+                        }
+                    }
                 }
-            } else {
-                // Directory-backed section
-                val parent = if (def.appLevel) appRoot else (projectRoot ?: continue)
-                val dir = parent.findChild(def.dirName)?.takeIf { it.isDirectory } ?: continue
-                val psiDir = psiManager.findDirectory(dir) ?: continue
-                children.add(RailsSectionNode(project, psiDir, settings, def.label, def.kind, ordinal++))
-                if (def.appLevel) claimedAppDirs.add(def.dirName) else claimedRootDirs.add(def.dirName)
-            }
-        }
-
-        if (projectRoot != null) {
-            val rootPsiDir = psiManager.findDirectory(projectRoot)
-            val appPsiDir = psiManager.findDirectory(appRoot)
-            if (rootPsiDir != null && appSettings.showProjectFiles) {
-                children.add(RailsProjectFilesNode(project, rootPsiDir, settings, claimedRootDirs, ordinal, appPsiDir, claimedAppDirs))
+                def.kind == SectionKind.EXTERNAL_FILES -> {
+                    children.add(ExternalFilesNode(project, settings, ordinal++))
+                }
+                def.kind == SectionKind.SCRATCHES -> {
+                    children.add(ScratchesNode(project, settings, ordinal++))
+                }
+                def.filePath != null -> {
+                    // File-backed section (e.g. Routes → config/routes.rb)
+                    val vf = projectRoot?.findFileByRelativePath(def.filePath)?.takeIf { !it.isDirectory } ?: continue
+                    psiManager.findFile(vf)?.let { psiFile ->
+                        children.add(RoutesSectionNode(project, psiFile, settings, ordinal++))
+                    }
+                }
+                else -> {
+                    // Directory-backed section
+                    val parent = if (def.appLevel) appRoot else (projectRoot ?: continue)
+                    val dir = parent.findChild(def.dirName)?.takeIf { it.isDirectory } ?: continue
+                    val psiDir = psiManager.findDirectory(dir) ?: continue
+                    children.add(RailsSectionNode(project, psiDir, settings, def.label, def.kind, ordinal++))
+                    if (def.appLevel) claimedAppDirs.add(def.dirName) else claimedRootDirs.add(def.dirName)
+                }
             }
         }
 
         return children
     }
 
-    private fun orderedSections(projectRoot: VirtualFile?): List<SectionDef> {
+    /**
+     * Returns the ordered section list plus the set of keys hidden by `.railsview !key` lines.
+     * Hidden keys are only populated from the project-level file; Settings and bundled defaults
+     * don't have a hide mechanism — use the Display Options checkboxes for those.
+     */
+    private fun orderedSections(projectRoot: VirtualFile?): Pair<List<SectionDef>, Set<String>> {
         // Priority 1: .railsview file in the project root
-        val projectKeys = projectRoot?.findChild(".railsview")?.let { parseKeyFile { it.inputStream } }
-        if (projectKeys != null) {
-            if (projectKeys.isEmpty()) return DEFAULT_SECTIONS
-            return resolveKeys(projectKeys)
+        val spec = projectRoot?.findChild(".railsview")?.let { parseRailsviewFile { it.inputStream } }
+        if (spec != null) {
+            val defs = if (spec.first.isEmpty()) DEFAULT_SECTIONS else resolveKeys(spec.first)
+            return Pair(defs, spec.second)
         }
 
         // Priority 2: user-configured order from Tools → Rails View settings
         val settingsOrder = RailsViewSettings.getInstance().sectionOrder
-        if (settingsOrder.isNotEmpty()) return resolveKeys(settingsOrder)
+        if (settingsOrder.isNotEmpty()) return Pair(resolveKeys(settingsOrder), emptySet())
 
         // Priority 3: bundled railsview-defaults.txt
-        return resolveKeys(loadBundledSectionOrder())
+        return Pair(resolveKeys(loadBundledSectionOrder()), emptySet())
     }
 
     private fun resolveKeys(keys: List<String>): List<SectionDef> {
@@ -169,11 +194,20 @@ class RailsProjectNode(
         return ordered
     }
 
-    private fun parseKeyFile(streamProvider: () -> java.io.InputStream?): List<String>? = try {
-        streamProvider()?.bufferedReader()?.readLines()
+    /**
+     * Parses a `.railsview` file.
+     * Returns (orderedKeys, hiddenKeys): regular lines contribute to order, `!key` lines hide a section.
+     * Returns null if the file is unreadable or empty (after stripping comments).
+     */
+    private fun parseRailsviewFile(streamProvider: () -> java.io.InputStream?): Pair<List<String>, Set<String>>? = try {
+        val lines = streamProvider()?.bufferedReader()?.readLines()
             ?.map { it.trim() }
             ?.filter { it.isNotEmpty() && !it.startsWith('#') }
             ?.takeIf { it.isNotEmpty() }
+            ?: return null
+        val ordered = lines.filter { !it.startsWith('!') }
+        val hidden  = lines.filter {  it.startsWith('!') }.map { it.removePrefix("!").trim() }.toSet()
+        Pair(ordered, hidden)
     } catch (_: Exception) {
         null
     }
